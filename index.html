@@ -1,287 +1,317 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WALLACE CORP | NEURAL TERMINAL v4.0</title>
+    <title>WALLACE CORP | NEURO-TERMINAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@300;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;700&family=Fira+Code:wght@300;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --neon-cyan: #00f3ff;
-            --neon-purple: #bc13fe;
-            --dark-bg: #05070a;
-            --panel-bg: rgba(13, 17, 23, 0.8);
+            --neon-green: #00ff9f;
+            --neon-blue: #00b8ff;
+            --danger: #ff0055;
+            --bg-ultra: #020408;
         }
 
         body {
-            background-color: var(--dark-bg);
-            background-image: 
-                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
-            color: #c9d1d9;
-            font-family: 'JetBrains Mono', monospace;
-            overflow-x: hidden;
+            background: var(--bg-ultra);
+            color: #a0aec0;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow: hidden; /* Терминал на весь экран */
+            height: 100vh;
         }
 
-        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .mono { font-family: 'Fira Code', monospace; }
 
-        .terminal-border {
-            border: 1px solid rgba(0, 243, 255, 0.2);
-            box-shadow: inset 0 0 15px rgba(0, 243, 255, 0.05);
+        /* Эффект старого монитора и развертки */
+        .crt::before {
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 200; background-size: 100% 2px, 3px 100%; pointer-events: none;
+        }
+
+        .glass-panel {
+            background: rgba(10, 15, 25, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
             position: relative;
+            overflow: hidden;
         }
 
-        .terminal-border::before {
-            content: '';
-            position: absolute;
-            top: -1px; left: -1px; width: 10px; height: 10px;
-            border-top: 2px solid var(--neon-cyan); border-left: 2px solid var(--neon-cyan);
+        .glass-panel::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+            animation: line-move 4s infinite;
         }
 
-        .scanline {
-            width: 100%; height: 2px;
-            background: rgba(0, 243, 255, 0.1);
-            position: fixed; top: 0; z-index: 100;
-            animation: scan 8s linear infinite;
-            pointer-events: none;
+        @keyframes line-move {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
-        @keyframes scan {
-            0% { top: -5%; }
-            100% { top: 100%; }
+        .ticker-wrap {
+            background: rgba(0, 255, 159, 0.05);
+            border-bottom: 1px solid rgba(0, 255, 159, 0.2);
         }
 
-        .btn-action {
-            background: rgba(0, 243, 255, 0.1);
-            border: 1px solid var(--neon-cyan);
-            transition: all 0.3s;
+        .price-up { color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 159, 0.5); }
+        .price-down { color: var(--danger); text-shadow: 0 0 10px rgba(255, 0, 85, 0.5); }
+
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--neon-blue);
         }
 
-        .btn-action:hover {
-            background: var(--neon-cyan);
-            color: black;
-            box-shadow: 0 0 15px var(--neon-cyan);
+        /* Анимация пульсации для критических данных */
+        .pulse { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--neon-cyan); }
     </style>
 </head>
-<body class="min-h-screen p-2 md:p-4">
-    <div class="scanline"></div>
+<body class="crt">
 
-    <header class="flex flex-col lg:flex-row justify-between items-center mb-4 p-4 terminal-border bg-[var(--panel-bg)] gap-4">
-        <div class="flex items-center gap-6">
-            <h1 class="orbitron text-2xl font-bold tracking-tighter text-[var(--neon-cyan)]">
-                WALLACE<span class="text-white opacity-50">_SYSTEMS</span>
-            </h1>
-            <div class="hidden md:block text-[10px] opacity-50">
-                CORE: v4.0.2-STABLE<br>ACCESS: AUTHORIZED
-            </div>
+    <div class="ticker-wrap h-8 flex items-center overflow-hidden whitespace-nowrap mono text-[10px]">
+        <div class="flex animate-[marquee_30s_linear_infinite]">
+            <span class="mx-4">SYSTEM_STATUS: OPTIMAL</span>
+            <span class="mx-4 text-cyan-400">BTC/USDT: <span id="tick-btc">...</span></span>
+            <span class="mx-4 text-purple-400">ETH/USDT: <span id="tick-eth">...</span></span>
+            <span class="mx-4 text-emerald-400">BNB/USDT: <span id="tick-bnb">...</span></span>
+            <span class="mx-4">NEURAL_LINK: ACTIVE</span>
+            <span class="mx-4 text-rose-400">VOLATILITY: HIGH</span>
         </div>
+    </div>
 
-        <div class="flex flex-1 max-w-xl px-4">
-            <div class="relative w-full">
-                <input type="text" id="coinSearch" placeholder="SEARCH_ASSET (e.g. solana, dot...)" 
-                    class="w-full bg-black/50 border border-cyan-900/50 rounded-none p-2 pl-10 focus:outline-none focus:border-cyan-400 text-cyan-400">
-                <span class="absolute left-3 top-2.5 opacity-50">⚡</span>
+    <div class="h-[calc(100vh-2rem)] grid grid-cols-12 gap-2 p-2">
+        
+        <aside class="col-span-3 flex flex-col gap-2">
+            <div class="glass-panel flex-1 p-4">
+                <h3 class="text-[10px] font-bold tracking-[0.3em] mb-4 text-slate-500 uppercase">Global_Assets</h3>
+                <div id="watchlist" class="space-y-1 overflow-y-auto max-h-[70vh]">
+                    </div>
             </div>
-        </div>
-
-        <div class="flex gap-4 items-center">
-            <div id="connection-status" class="text-[10px] text-emerald-400 animate-pulse">● LINK_ESTABLISHED</div>
-            <div id="server-time" class="text-xs font-bold">00:00:00</div>
-        </div>
-    </header>
-
-    <main class="grid grid-cols-12 gap-4">
-        <aside class="col-span-12 lg:col-span-3 space-y-4">
-            <div class="terminal-border p-4 bg-[var(--panel-bg)] h-[400px] flex flex-col">
-                <h3 class="orbitron text-xs mb-4 text-cyan-400">HOT_ASSETS</h3>
-                <div id="hot-list" class="space-y-2 overflow-y-auto flex-1 pr-2">
-                    <div class="animate-pulse bg-white/5 h-12 w-full"></div>
-                    <div class="animate-pulse bg-white/5 h-12 w-full"></div>
-                    <div class="animate-pulse bg-white/5 h-12 w-full"></div>
-                </div>
-            </div>
-
-            <div class="terminal-border p-4 bg-[var(--panel-bg)]">
-                <h3 class="orbitron text-xs mb-2 text-purple-400">SYSTEM_LOGS</h3>
-                <div class="text-[9px] font-light space-y-1 opacity-70" id="logs">
-                    <div>> INITIALIZING NEURAL LINK...</div>
-                    <div>> FETCHING MARKET_DATA...</div>
+            
+            <div class="glass-panel h-32 p-4 mono text-[10px]">
+                <div class="text-emerald-500 mb-1">>> SYSTEM_DIAGNOSTICS</div>
+                <div class="opacity-50 mt-2">
+                    LATENCY: <span id="latency">24ms</span><br>
+                    UPLINK: SECURE_AES_256<br>
+                    LOC: 34.0522° N, 118.2437° W
                 </div>
             </div>
         </aside>
 
-        <section class="col-span-12 lg:col-span-9 space-y-4">
-            <div class="terminal-border bg-[var(--panel-bg)] p-6">
-                <div class="flex justify-between items-end mb-6">
+        <main class="col-span-6 flex flex-col gap-2">
+            <div class="glass-panel flex-[3] p-6 relative">
+                <div class="flex justify-between items-start mb-6">
                     <div>
                         <div class="flex items-center gap-3">
-                            <h2 id="active-coin-name" class="text-3xl font-bold orbitron">BITCOIN</h2>
-                            <span id="active-coin-symbol" class="opacity-40">BTC/USD</span>
+                            <h1 id="main-title" class="text-4xl font-bold tracking-tighter text-white">BITCOIN</h1>
+                            <span id="main-symbol" class="mono bg-blue-500/20 text-blue-400 px-2 py-0.5 text-xs rounded">BTC/USD</span>
                         </div>
-                        <div id="active-price" class="text-4xl font-bold text-white mt-1">$0.00</div>
+                        <div id="main-price" class="text-5xl font-bold mono mt-2 text-white">$00,000.00</div>
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="setTime('1')" class="px-3 py-1 text-[10px] btn-action">1D</button>
-                        <button onclick="setTime('7')" class="px-3 py-1 text-[10px] btn-action">7D</button>
-                        <button onclick="setTime('30')" class="px-3 py-1 text-[10px] btn-action">1M</button>
+                    <div class="text-right">
+                        <div id="main-change" class="text-xl font-bold text-emerald-400">+0.00%</div>
+                        <div class="text-[10px] opacity-40 uppercase tracking-widest mt-1">24h Performance</div>
                     </div>
                 </div>
                 
-                <div id="main-chart" class="w-full h-[450px]"></div>
+                <div id="master-chart" class="w-full h-[65%]"></div>
+
+                <div class="absolute bottom-4 left-6 flex gap-4">
+                    <button onclick="changeTF('1')" class="btn-tf text-[10px] mono border border-white/10 px-3 py-1 hover:bg-white/10 transition-all">1D</button>
+                    <button onclick="changeTF('7')" class="btn-tf text-[10px] mono border border-cyan-500/50 bg-cyan-500/10 px-3 py-1">7D</button>
+                    <button onclick="changeTF('30')" class="btn-tf text-[10px] mono border border-white/10 px-3 py-1 hover:bg-white/10 transition-all">1M</button>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="terminal-border p-4 bg-cyan-950/20">
-                    <div class="text-[10px] opacity-50 uppercase">Market Cap</div>
-                    <div id="stat-cap" class="text-lg font-bold text-cyan-400">---</div>
+            <div class="glass-panel flex-1 p-4 grid grid-cols-2 gap-4">
+                <div>
+                    <h4 class="text-[9px] font-bold opacity-40 uppercase mb-2">Neural_News_Feed</h4>
+                    <div class="space-y-2" id="news-feed">
+                        <div class="text-[11px] border-l border-cyan-500 pl-2">Market sentiment shifts to "Extreme Greed" as BTC hits resistance.</div>
+                        <div class="text-[11px] border-l border-slate-700 pl-2 opacity-50">Wallace Corp expands digital asset holding by 12%.</div>
+                    </div>
                 </div>
-                <div class="terminal-border p-4 bg-purple-950/20">
-                    <div class="text-[10px] opacity-50 uppercase">24h Vol</div>
-                    <div id="stat-vol" class="text-lg font-bold text-purple-400">---</div>
-                </div>
-                <div class="terminal-border p-4 bg-emerald-950/20">
-                    <div class="text-[10px] opacity-50 uppercase">All-Time High</div>
-                    <div id="stat-ath" class="text-lg font-bold text-emerald-400">---</div>
-                </div>
-                <div class="terminal-border p-4 bg-rose-950/20">
-                    <div class="text-[10px] opacity-50 uppercase">Sentiment</div>
-                    <div class="text-lg font-bold text-rose-400">BULLISH_SIGNAL</div>
+                <div class="border-l border-white/5 pl-4">
+                    <h4 class="text-[9px] font-bold opacity-40 uppercase mb-2">Order_Flow_Live</h4>
+                    <div id="order-flow" class="mono text-[10px] space-y-1">
+                        </div>
                 </div>
             </div>
-        </section>
-    </main>
+        </main>
+
+        <aside class="col-span-3 flex flex-col gap-2">
+            <div class="glass-panel p-4 h-1/2">
+                <h3 class="text-[10px] font-bold tracking-[0.3em] mb-4 text-slate-500 uppercase">Market_Depth</h3>
+                <div id="depth-chart" class="h-full"></div>
+            </div>
+            
+            <div class="glass-panel p-6 flex-1 bg-gradient-to-br from-blue-900/20 to-transparent">
+                <h3 class="text-[10px] font-bold tracking-[0.3em] mb-6 text-slate-500 uppercase">Asset_Intelligence</h3>
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between text-[10px] mb-2"><span>RSI (14)</span><span class="text-cyan-400">62.4</span></div>
+                        <div class="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div class="h-full bg-cyan-500" style="width: 62%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[10px] mb-2"><span>VOLATILITY_INDEX</span><span class="text-rose-400">CRITICAL</span></div>
+                        <div class="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div class="h-full bg-rose-500 pulse" style="width: 88%"></div>
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-white/5">
+                        <div class="text-[9px] opacity-40 uppercase mb-2">AI_PREDICTION</div>
+                        <div class="text-lg font-bold text-emerald-400">BULLISH [84%]</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
 
     <script>
-        let chart = null;
+        let mainChart = null;
         let currentCoin = 'bitcoin';
-        let currentPeriod = '7';
+        let currentTF = '7';
 
-        // Инициализация ApexCharts
-        function initChart(data) {
+        // 1. WebSockets - Real-time Ticker (Binance)
+        const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker/ethusdt@ticker/bnbusdt@ticker');
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const price = parseFloat(data.c).toLocaleString(undefined, {minimumFractionDigits: 2});
+            const elId = `tick-${data.s.substring(0, 3).toLowerCase()}`;
+            const el = document.getElementById(elId);
+            if(el) {
+                el.innerText = `$${price}`;
+                if(data.s === 'BTCUSDT' && currentCoin === 'bitcoin') {
+                    document.getElementById('main-price').innerText = `$${price}`;
+                    document.getElementById('main-change').innerText = `${parseFloat(data.P) > 0 ? '+' : ''}${data.P}%`;
+                    document.getElementById('main-change').className = `text-xl font-bold ${parseFloat(data.P) > 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                }
+            }
+        };
+
+        // 2. Инициализация главного графика
+        async function initMasterChart(coinId) {
+            const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${currentTF}`);
+            const data = await res.json();
+            
             const options = {
                 series: [{ name: 'Price', data: data.prices }],
                 chart: {
                     type: 'area',
-                    height: 450,
-                    toolbar: { show: true },
-                    animations: { enabled: true },
-                    foreColor: '#52637a'
+                    height: '100%',
+                    toolbar: { show: false },
+                    animations: { enabled: true, easing: 'easeinout', speed: 800 },
+                    foreColor: '#4a5568'
                 },
-                colors: ['#00f3ff'],
+                colors: ['#00b8ff'],
+                stroke: { width: 2, curve: 'smooth' },
                 fill: {
                     type: 'gradient',
-                    gradient: {
-                        shadeIntensity: 1,
-                        opacityFrom: 0.4,
-                        opacityTo: 0,
-                        stops: [0, 90, 100]
-                    }
+                    gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0, stops: [0, 90, 100] }
                 },
+                grid: { borderColor: 'rgba(255,255,255,0.03)', xaxis: { lines: { show: true } } },
+                xaxis: { type: 'datetime', axisBorder: { show: false } },
+                yaxis: { show: true, opposite: true, labels: { style: { colors: '#4a5568' } } },
                 dataLabels: { enabled: false },
-                stroke: { curve: 'smooth', width: 2 },
-                grid: { borderColor: 'rgba(0, 243, 255, 0.05)' },
-                xaxis: {
-                    type: 'datetime',
-                    axisBorder: { show: false },
-                    axisTicks: { show: false }
-                },
-                yaxis: {
-                    labels: {
-                        formatter: (val) => '$' + val.toLocaleString()
-                    }
-                },
-                tooltip: { theme: 'dark', x: { format: 'dd MMM yyyy HH:mm' } }
+                tooltip: { theme: 'dark', x: { format: 'dd MMM HH:mm' } }
             };
 
-            if (chart) chart.destroy();
-            chart = new ApexCharts(document.querySelector("#main-chart"), options);
-            chart.render();
-        }
-
-        async function loadData(coinId) {
-            currentCoin = coinId;
-            addLog(`ATTEMPTING_SYNC: ${coinId.toUpperCase()}`);
+            if (mainChart) mainChart.destroy();
+            mainChart = new ApexCharts(document.querySelector("#master-chart"), options);
+            mainChart.render();
             
-            try {
-                // Fetch Market Data
-                const mRes = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false`);
-                const mData = await mRes.json();
-                
-                document.getElementById('active-coin-name').innerText = mData.name.toUpperCase();
-                document.getElementById('active-coin-symbol').innerText = `${mData.symbol.toUpperCase()}/USD`;
-                document.getElementById('active-price').innerText = `$${mData.market_data.current_price.usd.toLocaleString()}`;
-                document.getElementById('stat-cap').innerText = `$${(mData.market_data.market_cap.usd / 1e9).toFixed(2)}B`;
-                document.getElementById('stat-vol').innerText = `$${(mData.market_data.total_volume.usd / 1e9).toFixed(2)}B`;
-                document.getElementById('stat-ath').innerText = `$${mData.market_data.ath.usd.toLocaleString()}`;
-
-                // Fetch Chart Data
-                const cRes = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${currentPeriod}`);
-                const cData = await cRes.json();
-                
-                initChart({ prices: cData.prices });
-                addLog(`SYNC_COMPLETE: ${coinId.toUpperCase()}`);
-            } catch (e) {
-                addLog(`ERROR: FAILED_TO_CONNECT_TO_NODE`);
-            }
+            // Audio Feedback (Subtle Click)
+            playClick();
         }
 
-        async function loadHotAssets() {
-            const res = await fetch('https://api.coingecko.com/api/v3/search/trending');
+        // 3. Watchlist с мини-данными
+        async function loadWatchlist() {
+            const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=12&page=1&sparkline=false');
             const data = await res.json();
-            const list = document.getElementById('hot-list');
-            list.innerHTML = '';
+            const container = document.getElementById('watchlist');
+            container.innerHTML = '';
             
-            data.coins.forEach(c => {
-                const item = document.createElement('div');
-                item.className = 'p-3 border border-white/5 bg-white/5 hover:bg-cyan-500/10 cursor-pointer transition-all flex justify-between items-center';
-                item.onclick = () => loadData(c.item.id);
-                item.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <img src="${c.item.small}" class="w-4 h-4 grayscale opacity-70">
-                        <span class="text-xs font-bold">${c.item.symbol}</span>
+            data.forEach(coin => {
+                const div = document.createElement('div');
+                div.className = 'sidebar-item p-3 cursor-pointer transition-all flex justify-between items-center border-b border-white/5';
+                div.onclick = () => {
+                    currentCoin = coin.id;
+                    document.getElementById('main-title').innerText = coin.name.toUpperCase();
+                    document.getElementById('main-symbol').innerText = `${coin.symbol.toUpperCase()}/USD`;
+                    initMasterChart(coin.id);
+                };
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <img src="${coin.image}" class="w-5 h-5 grayscale hover:grayscale-0 transition-all">
+                        <div>
+                            <div class="text-xs font-bold text-white uppercase">${coin.symbol}</div>
+                            <div class="text-[10px] opacity-40">$${coin.current_price.toLocaleString()}</div>
+                        </div>
                     </div>
-                    <span class="text-[10px] text-emerald-400">RANK #${c.item.market_cap_rank}</span>
+                    <div class="text-right text-[10px] ${coin.price_change_percentage_24h > 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                        ${coin.price_change_percentage_24h.toFixed(2)}%
+                    </div>
                 `;
-                list.appendChild(item);
+                container.appendChild(div);
             });
         }
 
-        function addLog(msg) {
-            const logs = document.getElementById('logs');
+        // 4. Симуляция Order Flow
+        function simulateOrders() {
+            const container = document.getElementById('order-flow');
+            const sizes = [0.1, 0.5, 1.2, 0.05, 4.0, 0.8];
+            const buy = Math.random() > 0.5;
             const entry = document.createElement('div');
-            entry.innerText = `> ${new Date().toLocaleTimeString()} | ${msg}`;
-            logs.prepend(entry);
-            if (logs.children.length > 8) logs.lastChild.remove();
+            entry.className = `flex justify-between ${buy ? 'text-emerald-500' : 'text-rose-500'}`;
+            entry.innerHTML = `<span>${buy ? 'BUY' : 'SELL'}</span><span>${sizes[Math.floor(Math.random()*sizes.length)]} BTC</span><span>${new Date().toLocaleTimeString()}</span>`;
+            container.prepend(entry);
+            if(container.children.length > 6) container.lastChild.remove();
+            setTimeout(simulateOrders, Math.random() * 2000 + 500);
         }
 
-        function setTime(d) {
-            currentPeriod = d;
-            loadData(currentCoin);
+        function playClick() {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = context.createOscillator();
+            const gain = context.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, context.currentTime);
+            gain.gain.setValueAtTime(0.1, context.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(context.destination);
+            osc.start();
+            osc.stop(context.currentTime + 0.1);
         }
 
-        // Search logic
-        document.getElementById('coinSearch').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                loadData(e.target.value.toLowerCase().trim());
-                e.target.value = '';
-            }
-        });
+        function changeTF(tf) {
+            currentTF = tf;
+            initMasterChart(currentCoin);
+            document.querySelectorAll('.btn-tf').forEach(b => {
+                b.className = 'btn-tf text-[10px] mono border border-white/10 px-3 py-1 hover:bg-white/10 transition-all';
+            });
+            event.target.className = 'btn-tf text-[10px] mono border border-cyan-500/50 bg-cyan-500/10 px-3 py-1';
+        }
 
-        // Time and Sync
+        // Запуск
+        initMasterChart('bitcoin');
+        loadWatchlist();
+        simulateOrders();
+        
+        // Красивое обновление задержки сети
         setInterval(() => {
-            document.getElementById('server-time').innerText = new Date().toLocaleTimeString();
-        }, 1000);
+            document.getElementById('latency').innerText = Math.floor(Math.random() * 20 + 15) + 'ms';
+        }, 3000);
 
-        // Initial Load
-        loadData('bitcoin');
-        loadHotAssets();
     </script>
 </body>
 </html>
