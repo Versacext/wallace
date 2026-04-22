@@ -3,315 +3,636 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WALLACE CORP | NEURO-TERMINAL</title>
+    <title>MEXC Global | Wallace Professional Terminal</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;700&family=Fira+Code:wght@300;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --neon-green: #00ff9f;
-            --neon-blue: #00b8ff;
-            --danger: #ff0055;
-            --bg-ultra: #020408;
-        }
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 
-        body {
-            background: var(--bg-ultra);
-            color: #a0aec0;
-            font-family: 'Space Grotesk', sans-serif;
-            overflow: hidden; /* Терминал на весь экран */
-            height: 100vh;
-        }
+    </head>
+<body class="bg-[#0b0e11] text-[#eaecef] font-['Roboto'] text-[12px] h-screen overflow-hidden">
 
-        .mono { font-family: 'Fira Code', monospace; }
+    <nav class="h-12 border-b border-[#2b2f36] bg-[#161a1e] flex items-center justify-between px-4 z-50">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-[#0052ff] rounded flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">M</div>
+                <span class="text-lg font-bold tracking-tight text-white uppercase italic">MEXC <span class="text-[#0052ff] not-italic">WALLACE</span></span>
+            </div>
+            
+            <div class="hidden lg:flex gap-6 text-[13px] font-medium text-[#848e9c]">
+                <a href="#" class="hover:text-[#0052ff] transition-colors">Markets</a>
+                <a href="#" class="text-white border-b-2 border-[#0052ff] pb-3 pt-3">Spot</a>
+                <a href="#" class="hover:text-[#0052ff] transition-colors">Futures</a>
+                <a href="#" class="hover:text-[#0052ff] transition-colors">Copy Trading</a>
+                <a href="#" class="hover:text-[#0052ff] transition-colors text-orange-400">Launchpad</a>
+            </div>
+        </div>
 
-        /* Эффект старого монитора и развертки */
-        .crt::before {
-            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 200; background-size: 100% 2px, 3px 100%; pointer-events: none;
-        }
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 border-r border-[#2b2f36] pr-4 hidden sm:flex">
+                <span class="text-[#848e9c]">Spot Balance:</span>
+                <span class="font-bold text-white" id="user-balance">10,245.50</span>
+                <span class="text-[#0052ff] text-[10px] font-bold uppercase">USDT</span>
+            </div>
+            
+            <div class="flex gap-2">
+                <button class="bg-[#2ebd85] hover:bg-[#26a676] px-4 py-1.5 rounded text-white font-bold transition-all">Deposit</button>
+                <div class="w-8 h-8 bg-[#2b2f36] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#3b4046] border border-white/5">
+                    <span class="text-[10px]">ID</span>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-        .glass-panel {
-            background: rgba(10, 15, 25, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-            position: relative;
-            overflow: hidden;
-        }
+    <div class="h-12 border-b border-[#2b2f36] flex items-center px-4 gap-10 overflow-x-auto bg-[#161a1e]">
+        <div class="flex items-center gap-3 min-w-fit">
+            <div class="flex items-center gap-2">
+                <img id="active-coin-icon" src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" class="w-5 h-5">
+                <span class="text-base font-bold text-white" id="ticker-symbol">BTC/USDT</span>
+            </div>
+            <span class="text-lg font-bold text-[#2ebd85] tabular-nums" id="ticker-price">---</span>
+        </div>
 
-        .glass-panel::after {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
-            animation: line-move 4s infinite;
-        }
-
-        @keyframes line-move {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .ticker-wrap {
-            background: rgba(0, 255, 159, 0.05);
-            border-bottom: 1px solid rgba(0, 255, 159, 0.2);
-        }
-
-        .price-up { color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 159, 0.5); }
-        .price-down { color: var(--danger); text-shadow: 0 0 10px rgba(255, 0, 85, 0.5); }
-
-        .sidebar-item:hover {
-            background: rgba(255, 255, 255, 0.03);
-            border-left: 3px solid var(--neon-blue);
-        }
-
-        /* Анимация пульсации для критических данных */
-        .pulse { animation: pulse-red 2s infinite; }
-        @keyframes pulse-red {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-    </style>
-</head>
-<body class="crt">
-
-    <div class="ticker-wrap h-8 flex items-center overflow-hidden whitespace-nowrap mono text-[10px]">
-        <div class="flex animate-[marquee_30s_linear_infinite]">
-            <span class="mx-4">SYSTEM_STATUS: OPTIMAL</span>
-            <span class="mx-4 text-cyan-400">BTC/USDT: <span id="tick-btc">...</span></span>
-            <span class="mx-4 text-purple-400">ETH/USDT: <span id="tick-eth">...</span></span>
-            <span class="mx-4 text-emerald-400">BNB/USDT: <span id="tick-bnb">...</span></span>
-            <span class="mx-4">NEURAL_LINK: ACTIVE</span>
-            <span class="mx-4 text-rose-400">VOLATILITY: HIGH</span>
+        <div class="grid grid-cols-4 gap-8">
+            <div class="flex flex-col">
+                <span class="text-[#848e9c] text-[10px] uppercase">24h Change</span>
+                <span class="text-[#2ebd85] font-medium" id="ticker-change">---</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-[#848e9c] text-[10px] uppercase">24h High</span>
+                <span class="text-white font-medium" id="ticker-high">---</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-[#848e9c] text-[10px] uppercase">24h Low</span>
+                <span class="text-white font-medium" id="ticker-low">---</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-[#848e9c] text-[10px] uppercase">24h Volume (USDT)</span>
+                <span class="text-white font-medium" id="ticker-vol">---</span>
+            </div>
+        </div>
+        
+        <div class="ml-auto hidden xl:flex items-center gap-2 opacity-50">
+            <div class="w-2 h-2 bg-[#2ebd85] rounded-full animate-pulse"></div>
+            <span class="text-[10px] uppercase font-bold tracking-widest">Network: Stable</span>
         </div>
     </div>
 
-    <div class="h-[calc(100vh-2rem)] grid grid-cols-12 gap-2 p-2">
-        
-        <aside class="col-span-3 flex flex-col gap-2">
-            <div class="glass-panel flex-1 p-4">
-                <h3 class="text-[10px] font-bold tracking-[0.3em] mb-4 text-slate-500 uppercase">Global_Assets</h3>
-                <div id="watchlist" class="space-y-1 overflow-y-auto max-h-[70vh]">
-                    </div>
-            </div>
-            
-            <div class="glass-panel h-32 p-4 mono text-[10px]">
-                <div class="text-emerald-500 mb-1">>> SYSTEM_DIAGNOSTICS</div>
-                <div class="opacity-50 mt-2">
-                    LATENCY: <span id="latency">24ms</span><br>
-                    UPLINK: SECURE_AES_256<br>
-                    LOC: 34.0522° N, 118.2437° W
-                </div>
-            </div>
-        </aside>
+    <div id="main-layout" class="flex h-[calc(100vh-96px)] overflow-hidden">
+        </div>
 
-        <main class="col-span-6 flex flex-col gap-2">
-            <div class="glass-panel flex-[3] p-6 relative">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <div class="flex items-center gap-3">
-                            <h1 id="main-title" class="text-4xl font-bold tracking-tighter text-white">BITCOIN</h1>
-                            <span id="main-symbol" class="mono bg-blue-500/20 text-blue-400 px-2 py-0.5 text-xs rounded">BTC/USD</span>
-                        </div>
-                        <div id="main-price" class="text-5xl font-bold mono mt-2 text-white">$00,000.00</div>
-                    </div>
-                    <div class="text-right">
-                        <div id="main-change" class="text-xl font-bold text-emerald-400">+0.00%</div>
-                        <div class="text-[10px] opacity-40 uppercase tracking-widest mt-1">24h Performance</div>
-                    </div>
-                </div>
-                
-                <div id="master-chart" class="w-full h-[65%]"></div>
-
-                <div class="absolute bottom-4 left-6 flex gap-4">
-                    <button onclick="changeTF('1')" class="btn-tf text-[10px] mono border border-white/10 px-3 py-1 hover:bg-white/10 transition-all">1D</button>
-                    <button onclick="changeTF('7')" class="btn-tf text-[10px] mono border border-cyan-500/50 bg-cyan-500/10 px-3 py-1">7D</button>
-                    <button onclick="changeTF('30')" class="btn-tf text-[10px] mono border border-white/10 px-3 py-1 hover:bg-white/10 transition-all">1M</button>
-                </div>
-            </div>
-
-            <div class="glass-panel flex-1 p-4 grid grid-cols-2 gap-4">
-                <div>
-                    <h4 class="text-[9px] font-bold opacity-40 uppercase mb-2">Neural_News_Feed</h4>
-                    <div class="space-y-2" id="news-feed">
-                        <div class="text-[11px] border-l border-cyan-500 pl-2">Market sentiment shifts to "Extreme Greed" as BTC hits resistance.</div>
-                        <div class="text-[11px] border-l border-slate-700 pl-2 opacity-50">Wallace Corp expands digital asset holding by 12%.</div>
-                    </div>
-                </div>
-                <div class="border-l border-white/5 pl-4">
-                    <h4 class="text-[9px] font-bold opacity-40 uppercase mb-2">Order_Flow_Live</h4>
-                    <div id="order-flow" class="mono text-[10px] space-y-1">
-                        </div>
-                </div>
-            </div>
-        </main>
-
-        <aside class="col-span-3 flex flex-col gap-2">
-            <div class="glass-panel p-4 h-1/2">
-                <h3 class="text-[10px] font-bold tracking-[0.3em] mb-4 text-slate-500 uppercase">Market_Depth</h3>
-                <div id="depth-chart" class="h-full"></div>
-            </div>
-            
-            <div class="glass-panel p-6 flex-1 bg-gradient-to-br from-blue-900/20 to-transparent">
-                <h3 class="text-[10px] font-bold tracking-[0.3em] mb-6 text-slate-500 uppercase">Asset_Intelligence</h3>
-                <div class="space-y-6">
-                    <div>
-                        <div class="flex justify-between text-[10px] mb-2"><span>RSI (14)</span><span class="text-cyan-400">62.4</span></div>
-                        <div class="h-1 bg-white/5 rounded-full overflow-hidden">
-                            <div class="h-full bg-cyan-500" style="width: 62%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-[10px] mb-2"><span>VOLATILITY_INDEX</span><span class="text-rose-400">CRITICAL</span></div>
-                        <div class="h-1 bg-white/5 rounded-full overflow-hidden">
-                            <div class="h-full bg-rose-500 pulse" style="width: 88%"></div>
-                        </div>
-                    </div>
-                    <div class="pt-4 border-t border-white/5">
-                        <div class="text-[9px] opacity-40 uppercase mb-2">AI_PREDICTION</div>
-                        <div class="text-lg font-bold text-emerald-400">BULLISH [84%]</div>
-                    </div>
-                </div>
-            </div>
-        </aside>
-    </div>
-
-    <script>
-        let mainChart = null;
-        let currentCoin = 'bitcoin';
-        let currentTF = '7';
-
-        // 1. WebSockets - Real-time Ticker (Binance)
-        const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker/ethusdt@ticker/bnbusdt@ticker');
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const price = parseFloat(data.c).toLocaleString(undefined, {minimumFractionDigits: 2});
-            const elId = `tick-${data.s.substring(0, 3).toLowerCase()}`;
-            const el = document.getElementById(elId);
-            if(el) {
-                el.innerText = `$${price}`;
-                if(data.s === 'BTCUSDT' && currentCoin === 'bitcoin') {
-                    document.getElementById('main-price').innerText = `$${price}`;
-                    document.getElementById('main-change').innerText = `${parseFloat(data.P) > 0 ? '+' : ''}${data.P}%`;
-                    document.getElementById('main-change').className = `text-xl font-bold ${parseFloat(data.P) > 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-                }
-            }
-        };
-
-        // 2. Инициализация главного графика
-        async function initMasterChart(coinId) {
-            const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${currentTF}`);
-            const data = await res.json();
-            
-            const options = {
-                series: [{ name: 'Price', data: data.prices }],
-                chart: {
-                    type: 'area',
-                    height: '100%',
-                    toolbar: { show: false },
-                    animations: { enabled: true, easing: 'easeinout', speed: 800 },
-                    foreColor: '#4a5568'
-                },
-                colors: ['#00b8ff'],
-                stroke: { width: 2, curve: 'smooth' },
-                fill: {
-                    type: 'gradient',
-                    gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0, stops: [0, 90, 100] }
-                },
-                grid: { borderColor: 'rgba(255,255,255,0.03)', xaxis: { lines: { show: true } } },
-                xaxis: { type: 'datetime', axisBorder: { show: false } },
-                yaxis: { show: true, opposite: true, labels: { style: { colors: '#4a5568' } } },
-                dataLabels: { enabled: false },
-                tooltip: { theme: 'dark', x: { format: 'dd MMM HH:mm' } }
-            };
-
-            if (mainChart) mainChart.destroy();
-            mainChart = new ApexCharts(document.querySelector("#master-chart"), options);
-            mainChart.render();
-            
-            // Audio Feedback (Subtle Click)
-            playClick();
-        }
-
-        // 3. Watchlist с мини-данными
-        async function loadWatchlist() {
-            const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=12&page=1&sparkline=false');
-            const data = await res.json();
-            const container = document.getElementById('watchlist');
-            container.innerHTML = '';
-            
-            data.forEach(coin => {
-                const div = document.createElement('div');
-                div.className = 'sidebar-item p-3 cursor-pointer transition-all flex justify-between items-center border-b border-white/5';
-                div.onclick = () => {
-                    currentCoin = coin.id;
-                    document.getElementById('main-title').innerText = coin.name.toUpperCase();
-                    document.getElementById('main-symbol').innerText = `${coin.symbol.toUpperCase()}/USD`;
-                    initMasterChart(coin.id);
-                };
-                div.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <img src="${coin.image}" class="w-5 h-5 grayscale hover:grayscale-0 transition-all">
-                        <div>
-                            <div class="text-xs font-bold text-white uppercase">${coin.symbol}</div>
-                            <div class="text-[10px] opacity-40">$${coin.current_price.toLocaleString()}</div>
-                        </div>
-                    </div>
-                    <div class="text-right text-[10px] ${coin.price_change_percentage_24h > 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                        ${coin.price_change_percentage_24h.toFixed(2)}%
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // 4. Симуляция Order Flow
-        function simulateOrders() {
-            const container = document.getElementById('order-flow');
-            const sizes = [0.1, 0.5, 1.2, 0.05, 4.0, 0.8];
-            const buy = Math.random() > 0.5;
-            const entry = document.createElement('div');
-            entry.className = `flex justify-between ${buy ? 'text-emerald-500' : 'text-rose-500'}`;
-            entry.innerHTML = `<span>${buy ? 'BUY' : 'SELL'}</span><span>${sizes[Math.floor(Math.random()*sizes.length)]} BTC</span><span>${new Date().toLocaleTimeString()}</span>`;
-            container.prepend(entry);
-            if(container.children.length > 6) container.lastChild.remove();
-            setTimeout(simulateOrders, Math.random() * 2000 + 500);
-        }
-
-        function playClick() {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = context.createOscillator();
-            const gain = context.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, context.currentTime);
-            gain.gain.setValueAtTime(0.1, context.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(context.destination);
-            osc.start();
-            osc.stop(context.currentTime + 0.1);
-        }
-
-        function changeTF(tf) {
-            currentTF = tf;
-            initMasterChart(currentCoin);
-            document.querySelectorAll('.btn-tf').forEach(b => {
-                b.className = 'btn-tf text-[10px] mono border border-white/10 px-3 py-1 hover:bg-white/10 transition-all';
-            });
-            event.target.className = 'btn-tf text-[10px] mono border border-cyan-500/50 bg-cyan-500/10 px-3 py-1';
-        }
-
-        // Запуск
-        initMasterChart('bitcoin');
-        loadWatchlist();
-        simulateOrders();
-        
-        // Красивое обновление задержки сети
-        setInterval(() => {
-            document.getElementById('latency').innerText = Math.floor(Math.random() * 20 + 15) + 'ms';
-        }, 3000);
-
-    </script>
 </body>
 </html>
+<style>
+    /* 1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ (MEXC PALETTE) */
+    :root {
+        --bg-main: #0b0e11;
+        --bg-card: #161a1e;
+        --bg-hover: #2b2f36;
+        --text-primary: #eaecef;
+        --text-secondary: #848e9c;
+        --mexc-blue: #0052ff;
+        --up: #2ebd85;    /* Зеленый для роста */
+        --down: #df294a;  /* Красный для падения */
+        --border: #2b2f36;
+        --font-mono: 'IBM Plex Sans', monospace;
+    }
+
+    /* 2. БАЗОВЫЕ НАСТРОЙКИ СКРОЛЛБАРА */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-main); }
+    ::-webkit-scrollbar-thumb { 
+        background: #3b4046; 
+        border-radius: 10px; 
+    }
+    ::-webkit-scrollbar-thumb:hover { background: #474d57; }
+
+    /* 3. ОБЩИЕ КЛАССЫ КОМПОНЕНТОВ */
+    .border-base { border: 1px solid var(--border); }
+    .bg-card { background-color: var(--bg-card); }
+    .font-mono { font-family: var(--font-mono); }
+
+    /* Эффект активной вкладки */
+    .tab-active {
+        color: var(--mexc-blue) !important;
+        border-bottom: 2px solid var(--mexc-blue);
+    }
+
+    /* 4. АНИМАЦИЯ ГЛУБИНЫ СТАКАНА (ORDER BOOK) */
+    /* Эти полоски показывают объем заявок на заднем плане цены */
+    .depth-bid {
+        position: absolute; right: 0; top: 0; height: 100%;
+        background: rgba(46, 189, 133, 0.12); /* Прозрачный зеленый */
+        z-index: 0; transition: width 0.4s ease-out;
+    }
+    .depth-ask {
+        position: absolute; right: 0; top: 0; height: 100%;
+        background: rgba(223, 41, 74, 0.12); /* Прозрачный красный */
+        z-index: 0; transition: width 0.4s ease-out;
+    }
+
+    /* 5. ПОЛЯ ВВОДА И КНОПКИ (TRADE PANEL) */
+    .input-dark {
+        background: #2b2f36;
+        border: 1px solid #474d57;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        width: 100%;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .input-dark:focus { 
+        border-color: var(--mexc-blue);
+        background: #32363e;
+    }
+
+    .btn-buy { 
+        background-color: var(--up); 
+        color: white; 
+        font-weight: 700; 
+        padding: 12px; 
+        border-radius: 4px; 
+        transition: transform 0.1s, opacity 0.2s;
+    }
+    .btn-sell { 
+        background-color: var(--down); 
+        color: white; 
+        font-weight: 700; 
+        padding: 12px; 
+        border-radius: 4px; 
+        transition: transform 0.1s, opacity 0.2s;
+    }
+    .btn-buy:active, .btn-sell:active { transform: scale(0.98); }
+    .btn-buy:hover, .btn-sell:hover { opacity: 0.9; }
+
+    /* 6. ТАБЛИЦЫ И СПИСКИ РЫНКОВ */
+    .market-row:hover {
+        background-color: var(--bg-hover);
+    }
+    
+    .sticky-header {
+        position: sticky;
+        top: 0;
+        background: var(--bg-card);
+        z-index: 10;
+    }
+
+    /* 7. АНИМАЦИИ ОБНОВЛЕНИЯ ЦЕН (FLASH EFFECTS) */
+    @keyframes flash-green {
+        0% { background-color: rgba(46, 189, 133, 0.3); color: var(--up); }
+        100% { background-color: transparent; }
+    }
+    @keyframes flash-red {
+        0% { background-color: rgba(223, 41, 74, 0.3); color: var(--down); }
+        100% { background-color: transparent; }
+    }
+
+    .price-update-up { animation: flash-green 0.8s ease-out; }
+    .price-update-down { animation: flash-red 0.8s ease-out; }
+
+    /* 8. ТОРГОВЫЙ ВИДЖЕТ И ЛЕЙАУТ */
+    #tv_chart_container { 
+        height: 100%; 
+        width: 100%;
+        background: #161a1e;
+    }
+
+    /* Анимация появления уведомлений */
+    @keyframes slide-in {
+        from { transform: translateX(120%); }
+        to { transform: translateX(0); }
+    }
+    .notification-anim {
+        animation: slide-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* 9. СПЕЦИФИЧЕСКИЕ ПРАВКИ ДЛЯ ПЛОТНОСТИ ИНТЕРФЕЙСА */
+    .compact-text {
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+    }
+    
+    .glass-effect {
+        backdrop-filter: blur(4px);
+        background: rgba(22, 26, 30, 0.8);
+    }
+</style>
+        <aside class="w-72 border-r border-base bg-card flex flex-col flex-shrink-0">
+            <div class="p-3 border-b border-base">
+                <div class="relative">
+                    <span class="absolute left-3 top-2.5 opacity-30">🔍</span>
+                    <input type="text" id="market-search" placeholder="Search Markets..." class="input-dark pl-9 text-[11px]">
+                </div>
+            </div>
+            
+            <div class="flex border-b border-base text-[10px] uppercase font-bold text-secondary">
+                <div class="flex-1 p-2.5 text-center border-r border-base cursor-pointer hover:text-white transition-colors tab-active">USDT</div>
+                <div class="flex-1 p-2.5 text-center border-r border-base cursor-pointer hover:text-white transition-colors">USDC</div>
+                <div class="flex-1 p-2.5 text-center cursor-pointer hover:text-white transition-colors">Favorites</div>
+            </div>
+
+            <div class="grid grid-cols-3 p-2 px-4 text-[10px] text-secondary font-bold uppercase bg-[#1e2329]/50">
+                <span>Pair</span>
+                <span class="text-right">Price</span>
+                <span class="text-right">Change</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar" id="market-list">
+                <div class="p-10 text-center opacity-20 animate-pulse">Initializing Streams...</div>
+            </div>
+        </aside>
+
+        <section class="flex-1 flex flex-col min-w-0 bg-[#0b0e11]">
+            <div class="flex-1 relative border-b border-base">
+                <div id="tv_chart_container">
+                    </div>
+            </div>
+
+            <div class="h-72 flex flex-col bg-card">
+                <div class="flex border-b border-base h-10 items-center px-4 gap-8 text-[11px] font-bold">
+                    <div class="cursor-pointer tab-active h-full flex items-center border-b-2 border-mexc-blue">Open Orders (0)</div>
+                    <div class="cursor-pointer text-secondary h-full flex items-center hover:text-white transition-colors">Order History</div>
+                    <div class="cursor-pointer text-secondary h-full flex items-center hover:text-white transition-colors">Trade History</div>
+                    <div class="cursor-pointer text-secondary h-full flex items-center hover:text-white transition-colors">Funds</div>
+                </div>
+                
+                <div class="flex-1 overflow-auto">
+                    <table class="w-full text-left text-[11px] border-collapse">
+                        <thead class="text-secondary sticky top-0 bg-[#161a1e] border-b border-base shadow-sm">
+                            <tr>
+                                <th class="p-3 font-medium">Time</th>
+                                <th class="p-3 font-medium">Type</th>
+                                <th class="p-3 font-medium">Side</th>
+                                <th class="p-3 font-medium">Price (USDT)</th>
+                                <th class="p-3 font-medium">Amount</th>
+                                <th class="p-3 font-medium">Filled</th>
+                                <th class="p-3 font-medium">Total (USDT)</th>
+                                <th class="p-3 font-medium">Status</th>
+                                <th class="p-3 font-medium text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="open-orders-table">
+                            <tr>
+                                <td colspan="9" class="p-20 text-center">
+                                    <div class="flex flex-col items-center opacity-20">
+                                        <span class="text-4xl mb-2">📄</span>
+                                        <p>No active orders found in your portfolio</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <aside class="w-[320px] border-l border-base flex flex-col bg-card flex-shrink-0">
+            
+            <div class="flex-1 flex flex-col min-h-0 border-b border-base">
+                <div class="p-3 border-b border-base flex justify-between items-center bg-[#1e2329]/30">
+                    <span class="text-[11px] font-bold uppercase tracking-wider">Order Book</span>
+                    <div class="flex gap-2">
+                        <div class="w-4 h-4 bg-emerald-500/20 border border-emerald-500/50 rounded-sm cursor-pointer"></div>
+                        <div class="w-4 h-4 bg-rose-500/20 border border-rose-500/50 rounded-sm cursor-pointer"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 p-2 px-3 text-[10px] text-secondary font-bold uppercase border-base border-t-0">
+                    <span>Price</span>
+                    <span class="text-right">Amount</span>
+                    <span class="text-right">Total</span>
+                </div>
+
+                <div class="flex-1 overflow-hidden flex flex-col-reverse justify-start" id="order-book-asks">
+                    </div>
+
+                <div class="p-3 bg-[#1e2329]/60 border-y border-base flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-mono font-bold text-up" id="spread-price">---</span>
+                        <span class="text-xs text-secondary italic" id="spread-fiat">≈ ---$</span>
+                    </div>
+                    <span class="text-[10px] text-up font-bold">More</span>
+                </div>
+
+                <div class="flex-1 overflow-hidden" id="order-book-bids">
+                    </div>
+            </div>
+
+            <div class="p-5 flex flex-col gap-4 bg-[#161a1e] border-t border-[#2b2f36]">
+                <div class="flex gap-1 bg-[#2b2f36] p-1 rounded-md">
+                    <button id="tab-buy" class="flex-1 py-1.5 rounded text-[11px] font-bold bg-[#474d57] text-white">Buy</button>
+                    <button id="tab-sell" class="flex-1 py-1.5 rounded text-[11px] font-bold text-secondary hover:text-white transition-all">Sell</button>
+                </div>
+
+                <div class="flex justify-between text-[10px] font-medium px-1">
+                    <span class="text-secondary">Available Balance</span>
+                    <span class="text-white"><span id="trade-avail">10,245.50</span> <span class="text-secondary uppercase">USDT</span></span>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="relative group">
+                        <span class="absolute left-3 top-2.5 text-secondary text-[10px] uppercase font-bold group-focus-within:text-mexc-blue transition-colors">Price</span>
+                        <input type="number" id="trade-price" class="input-dark text-right pr-12 text-sm font-bold font-mono" value="0.00">
+                        <span class="absolute right-3 top-2.5 text-secondary text-[10px]">USDT</span>
+                    </div>
+                    <div class="relative group">
+                        <span class="absolute left-3 top-2.5 text-secondary text-[10px] uppercase font-bold group-focus-within:text-mexc-blue transition-colors">Amount</span>
+                        <input type="number" id="trade-amount" class="input-dark text-right pr-12 text-sm font-bold font-mono" value="0.00">
+                        <span class="absolute right-3 top-2.5 text-secondary text-[10px]" id="unit-symbol">BTC</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between gap-1.5 mt-1">
+                    <button onclick="setPercent(25)" class="flex-1 py-1 bg-[#2b2f36] text-[10px] rounded hover:bg-[#3b4046] transition-colors border border-white/5">25%</button>
+                    <button onclick="setPercent(50)" class="flex-1 py-1 bg-[#2b2f36] text-[10px] rounded hover:bg-[#3b4046] transition-colors border border-white/5">50%</button>
+                    <button onclick="setPercent(75)" class="flex-1 py-1 bg-[#2b2f36] text-[10px] rounded hover:bg-[#3b4046] transition-colors border border-white/5">75%</button>
+                    <button onclick="setPercent(100)" class="flex-1 py-1 bg-[#2b2f36] text-[10px] rounded hover:bg-[#3b4046] transition-colors border border-white/5">100%</button>
+                </div>
+
+                <div class="flex justify-between text-[12px] font-bold border-t border-base pt-3 mt-1">
+                    <span class="text-secondary">Total Value</span>
+                    <span id="trade-total" class="font-mono">0.00 USDT</span>
+                </div>
+
+                <button class="btn-buy w-full uppercase tracking-[1px] text-xs shadow-lg shadow-emerald-500/10" onclick="placeOrder()">Buy BTC</button>
+            </div>
+        </aside>
+        <script>
+    /**
+     * WALLACE X MEXC CORE ENGINE v4.0
+     * Полная реализация торгового функционала
+     */
+
+    const STATE = {
+        currentPair: 'btcusdt',
+        currentCoin: 'bitcoin',
+        userBalance: 10245.50,
+        orders: [],
+        lastPrice: 0,
+        ws: null
+    };
+
+    // 1. ИНИЦИАЛИЗАЦИЯ СИСТЕМЫ
+    window.addEventListener('DOMContentLoaded', () => {
+        initTradingView();
+        fetchMarketList();
+        connectWebSocket();
+        initOrderBook();
+        
+        // Интервалы для динамики
+        setInterval(updateOrderBookVisuals, 800);
+        setInterval(updateNetworkStats, 3000);
+    });
+
+    // 2. ПОДКЛЮЧЕНИЕ К ГРАФИКАМ (TRADINGVIEW)
+    function initTradingView() {
+        new TradingView.widget({
+            "autosize": true,
+            "symbol": "BINANCE:BTCUSDT",
+            "interval": "15",
+            "timezone": "Etc/UTC",
+            "theme": "dark",
+            "style": "1",
+            "locale": "en",
+            "toolbar_bg": "#161a1e",
+            "enable_publishing": false,
+            "hide_side_toolbar": false,
+            "allow_symbol_change": true,
+            "container_id": "tv_chart_container",
+            "backgroundColor": "#161a1e",
+            "gridColor": "rgba(42, 46, 57, 0.05)"
+        });
+    }
+
+    // 3. REAL-TIME DATA (WEBSOCKETS)
+    function connectWebSocket() {
+        if (STATE.ws) STATE.ws.close();
+        
+        STATE.ws = new WebSocket(`wss://stream.binance.com:9443/ws/${STATE.currentPair}@ticker`);
+        
+        STATE.ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const price = parseFloat(data.c);
+            const change = parseFloat(data.P);
+            
+            // Анимация обновления цены
+            const priceEl = document.getElementById('ticker-price');
+            const spreadPrice = document.getElementById('spread-price');
+            
+            const directionClass = price >= STATE.lastPrice ? 'price-update-up text-up' : 'price-update-down text-down';
+            
+            [priceEl, spreadPrice].forEach(el => {
+                el.innerText = price.toLocaleString(undefined, {minimumFractionDigits: 2});
+                el.className = `font-bold ${directionClass}`;
+                // Убираем класс анимации через 800мс
+                setTimeout(() => el.classList.remove('price-update-up', 'price-update-down'), 800);
+            });
+
+            document.getElementById('ticker-change').innerText = `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
+            document.getElementById('ticker-change').className = change > 0 ? 'text-up font-medium' : 'text-down font-medium';
+            document.getElementById('ticker-high').innerText = parseFloat(data.h).toLocaleString();
+            document.getElementById('ticker-low').innerText = parseFloat(data.l).toLocaleString();
+            document.getElementById('ticker-vol').innerText = parseFloat(data.q).toLocaleString(undefined, {maximumFractionDigits: 0});
+            document.getElementById('spread-fiat').innerText = `≈ ${price.toLocaleString()}$`;
+            
+            STATE.lastPrice = price;
+        };
+    }
+
+    // 4. СПИСОК РЫНКОВ (API)
+    async function fetchMarketList() {
+        try {
+            const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&sparkline=false');
+            const data = await res.json();
+            renderMarkets(data);
+        } catch (e) {
+            showNotify("System Error", "Failed to sync market list", "down");
+        }
+    }
+
+    function renderMarkets(coins) {
+        const list = document.getElementById('market-list');
+        list.innerHTML = coins.map(coin => `
+            <div class="grid grid-cols-3 p-3 px-4 hover:bg-[#2b2f36] cursor-pointer border-b border-[#2b2f36]/50 transition-colors group" 
+                 onclick="switchAsset('${coin.id}', '${coin.symbol}')">
+                <div class="flex items-center gap-2">
+                    <img src="${coin.image}" class="w-4 h-4 grayscale group-hover:grayscale-0 transition-all">
+                    <span class="font-bold text-white uppercase">${coin.symbol}/USDT</span>
+                </div>
+                <div class="text-right font-mono font-medium">$${coin.current_price.toLocaleString()}</div>
+                <div class="text-right font-bold ${coin.price_change_percentage_24h > 0 ? 'text-up' : 'text-down'}">
+                    ${coin.price_change_percentage_24h > 0 ? '+' : ''}${coin.price_change_percentage_24h.toFixed(2)}%
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 5. ORDER BOOK ENGINE
+    function initOrderBook() {
+        const asks = document.getElementById('order-book-asks');
+        const bids = document.getElementById('order-book-bids');
+        
+        let htmlAsks = '';
+        let htmlBids = '';
+        
+        for(let i=0; i<18; i++) {
+            htmlAsks += createBookRow('ask');
+            htmlBids += createBookRow('bid');
+        }
+        
+        asks.innerHTML = htmlAsks;
+        bids.innerHTML = htmlBids;
+    }
+
+    function createBookRow(type) {
+        const price = (Math.random() * 100).toFixed(2);
+        const amount = (Math.random() * 5).toFixed(4);
+        const depth = Math.floor(Math.random() * 90) + 5;
+        
+        return `
+            <div class="relative grid grid-cols-3 p-1 px-3 text-[11px] font-mono hover:bg-white/5 transition-colors cursor-pointer">
+                <div class="${type === 'bid' ? 'depth-bid' : 'depth-ask'}" style="width: ${depth}%"></div>
+                <span class="${type === 'bid' ? 'text-up' : 'text-down'} z-10 font-bold">${price}</span>
+                <span class="text-right text-white z-10 font-medium">${amount}</span>
+                <span class="text-right text-secondary z-10">${(price * amount).toFixed(1)}</span>
+            </div>
+        `;
+    }
+
+    function updateOrderBookVisuals() {
+        // Симуляция живого движения цен в стакане
+        const basePrice = STATE.lastPrice || 65000;
+        const rows = document.querySelectorAll('#order-book-asks > div, #order-book-bids > div');
+        rows.forEach((row, i) => {
+            if(Math.random() > 0.7) {
+                const priceNode = row.querySelector('span:first-of-type');
+                const offset = (Math.random() * 10).toFixed(2);
+                priceNode.innerText = (i < 18 ? basePrice + parseFloat(offset) : basePrice - parseFloat(offset)).toLocaleString();
+            }
+        });
+    }
+
+    // 6. ТОРГОВАЯ ЛОГИКА
+    function setPercent(p) {
+        const price = parseFloat(document.getElementById('trade-price').value) || STATE.lastPrice;
+        if (!price) return;
+        const amount = (STATE.userBalance * (p/100)) / price;
+        document.getElementById('trade-amount').value = amount.toFixed(6);
+        updateTotal();
+    }
+
+    function updateTotal() {
+        const p = parseFloat(document.getElementById('trade-price').value) || 0;
+        const a = parseFloat(document.getElementById('trade-amount').value) || 0;
+        document.getElementById('trade-total').innerText = (p * a).toLocaleString(undefined, {minimumFractionDigits: 2}) + ' USDT';
+    }
+
+    function placeOrder() {
+        const price = parseFloat(document.getElementById('trade-price').value);
+        const amount = parseFloat(document.getElementById('trade-amount').value);
+        const total = price * amount;
+
+        if (total <= 0 || total > STATE.userBalance) {
+            showNotify("Order Failed", "Insufficient balance or invalid amount", "down");
+            return;
+        }
+
+        const newOrder = {
+            id: Date.now(),
+            time: new Date().toLocaleTimeString(),
+            pair: STATE.currentPair.toUpperCase(),
+            type: 'Limit',
+            side: 'Buy',
+            price: price,
+            amount: amount,
+            total: total.toFixed(2)
+        };
+
+        STATE.orders.unshift(newOrder);
+        STATE.userBalance -= total;
+        
+        updateUI();
+        renderOrders();
+        showNotify("Order Placed", `Bought ${amount} ${STATE.currentCoin.toUpperCase()}`, "up");
+    }
+
+    function renderOrders() {
+        const container = document.getElementById('open-orders-table');
+        if (STATE.orders.length === 0) return;
+
+        container.innerHTML = STATE.orders.map(o => `
+            <tr class="border-b border-[#2b2f36] hover:bg-[#1e2329] transition-all">
+                <td class="p-3 text-secondary">${o.time}</td>
+                <td class="p-3">Limit</td>
+                <td class="p-3 text-up font-bold">${o.side}</td>
+                <td class="p-3 font-mono text-white">${o.price.toLocaleString()}</td>
+                <td class="p-3 font-mono">${o.amount}</td>
+                <td class="p-3">0.00%</td>
+                <td class="p-3 font-mono">${o.total}</td>
+                <td class="p-3 text-blue-400">Processing</td>
+                <td class="p-3 text-right">
+                    <button onclick="cancelOrder(${o.id})" class="text-rose-500 hover:underline font-bold">Cancel</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function cancelOrder(id) {
+        const order = STATE.orders.find(o => o.id === id);
+        STATE.userBalance += parseFloat(order.total);
+        STATE.orders = STATE.orders.filter(o => o.id !== id);
+        
+        updateUI();
+        renderOrders();
+        showNotify("Order Canceled", "Funds returned to spot wallet", "down");
+    }
+
+    // 7. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+    function updateUI() {
+        document.getElementById('user-balance').innerText = STATE.userBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('trade-avail').innerText = STATE.userBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+    }
+
+    function switchAsset(id, symbol) {
+        STATE.currentCoin = id;
+        STATE.currentPair = symbol.toLowerCase() + 'usdt';
+        
+        document.getElementById('ticker-symbol').innerText = `${symbol.toUpperCase()}/USDT`;
+        document.getElementById('unit-symbol').innerText = symbol.toUpperCase();
+        document.querySelector('.btn-buy').innerText = `Buy ${symbol.toUpperCase()}`;
+        
+        // Сброс и реинициализация
+        connectWebSocket();
+        showNotify("Market Switch", `Loading ${symbol.toUpperCase()} live stream...`, "up");
+        
+        // Перезагрузка иконки
+        document.getElementById('active-coin-icon').src = `https://assets.coingecko.com/coins/images/${id === 'bitcoin' ? 1 : 2}/small/${id}.png`;
+    }
+
+    function showNotify(title, msg, type) {
+        const container = document.body;
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 right-6 z-[999] p-4 rounded-lg shadow-2xl border-l-4 notification-anim ${type === 'up' ? 'bg-[#142e26] border-up' : 'bg-[#2e141a] border-down'} min-w-[280px]`;
+        toast.innerHTML = `
+            <div class="font-bold text-sm text-white mb-1 uppercase tracking-tight">${title}</div>
+            <div class="text-xs text-white/70">${msg}</div>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100px)';
+            setTimeout(() => toast.remove(), 500);
+        }, 4000);
+    }
+
+    function updateNetworkStats() {
+        const latency = Math.floor(Math.random() * 15 + 10);
+        console.log(`[NETWORK] Latency: ${latency}ms | Packet Loss: 0%`);
+    }
+
+    // Слушатели ввода для обновления Total
+    document.getElementById('trade-price').addEventListener('input', updateTotal);
+    document.getElementById('trade-amount').addEventListener('input', updateTotal);
+        </script>
+        
